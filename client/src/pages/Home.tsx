@@ -8,12 +8,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Settings, Database } from "lucide-react";
+import { Settings, Database, Volume2, VolumeX } from "lucide-react";
 import AvatarDisplay from "@/components/AvatarDisplay";
 import ChatInterface, { type Message } from "@/components/ChatInterface";
 import MessageInput from "@/components/MessageInput";
 import KnowledgeBaseManager from "@/components/KnowledgeBaseManager";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useSpeechSynthesis } from "@/hooks/use-speech-synthesis";
 
 type AvatarState = "idle" | "listening" | "thinking" | "speaking";
 
@@ -39,6 +40,7 @@ export default function Home() {
       type: "pdf",
     },
   ]);
+  const { speak, stop, isSpeaking, isSupported: isTTSSupported } = useSpeechSynthesis();
 
   const handleSendMessage = async (content: string) => {
     const userMessage: Message = {
@@ -54,21 +56,28 @@ export default function Home() {
 
     //todo: remove mock functionality - replace with actual API call
     setTimeout(() => {
-      setAvatarState("speaking");
-      
-      setTimeout(() => {
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: `Great question! Based on your knowledge base, I can help you understand this topic better. ${content.includes("explain") ? "Let me break it down for you step by step..." : "Here's what I found..."}`,
-          timestamp: new Date(),
-        };
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: `Great question! Based on your knowledge base, I can help you understand this topic better. ${content.includes("explain") ? "Let me break it down for you step by step..." : "Here's what I found..."}`,
+        timestamp: new Date(),
+      };
 
-        setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
+      setIsProcessing(false);
+      
+      setAvatarState("speaking");
+      speak(assistantMessage.content, () => {
         setAvatarState("idle");
-        setIsProcessing(false);
-      }, 2000);
+      });
     }, 1500);
+  };
+
+  const handleToggleSpeech = () => {
+    if (isSpeaking) {
+      stop();
+      setAvatarState("idle");
+    }
   };
 
   const handleUploadFiles = (files: File[]) => {
@@ -139,6 +148,17 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2">
+            {isTTSSupported && isSpeaking && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleToggleSpeech}
+                data-testid="button-stop-speech"
+              >
+                <VolumeX className="w-5 h-5" />
+              </Button>
+            )}
+            
             <Sheet>
               <SheetTrigger asChild>
                 <Button
