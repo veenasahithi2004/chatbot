@@ -106,6 +106,14 @@ export default function Home() {
     setKnowledgeFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
+  const handleVoiceStateChange = (isListening: boolean) => {
+    if (isListening) {
+      setAvatarState("listening");
+    } else {
+      setAvatarState("idle");
+    }
+  };
+
   return (
     <div className="flex h-screen w-full overflow-hidden">
       <div className="hidden lg:flex lg:w-1/2 border-r border-border sticky top-0 h-screen">
@@ -179,6 +187,7 @@ export default function Home() {
         <MessageInput
           onSendMessage={handleSendMessage}
           disabled={isProcessing}
+          onVoiceStateChange={handleVoiceStateChange}
           placeholder={
             knowledgeFiles.length === 0
               ? "Upload files to your knowledge base first..."
