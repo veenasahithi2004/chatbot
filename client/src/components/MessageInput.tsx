@@ -38,6 +38,16 @@ export default function MessageInput({
           .join('');
         
         setMessage(transcript);
+        
+        const isFinal = event.results[event.results.length - 1].isFinal;
+        if (isFinal && transcript.trim()) {
+          setTimeout(() => {
+            onSendMessage(transcript.trim());
+            setMessage("");
+            setIsListening(false);
+            onVoiceStateChange?.(false);
+          }, 500);
+        }
       };
 
       recognitionRef.current.onend = () => {
@@ -71,7 +81,7 @@ export default function MessageInput({
         recognitionRef.current.stop();
       }
     };
-  }, [toast, onVoiceStateChange]);
+  }, [toast, onVoiceStateChange, onSendMessage]);
 
   const handleSubmit = () => {
     if (message.trim() && !disabled) {
@@ -168,9 +178,9 @@ export default function MessageInput({
         </div>
         <p className="text-xs text-muted-foreground mt-2 px-1">
           {isListening 
-            ? "Speak now... Click microphone again to stop" 
+            ? "Speak now... Your message will be sent automatically when you finish" 
             : isSpeechSupported
-            ? "Press Enter to send, Shift + Enter for new line, or click mic for voice input"
+            ? "Press Enter to send, Shift + Enter for new line, or click mic to speak and send"
             : "Press Enter to send, Shift + Enter for new line"
           }
         </p>
